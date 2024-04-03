@@ -1,18 +1,30 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import ReactWordcloud from "react-wordcloud";
+import './App.css'; 
 
 const MemoizedReactWordcloud = React.memo(ReactWordcloud);
 
 function App() {
-  const [url, setUrl] = useState("");
-  const [wordFrequenciesArray, setWordFrequenciesArray] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+ const [url, setUrl] = useState("");
+ const [wordFrequenciesArray, setWordFrequenciesArray] = useState([]);
+ const [loading, setLoading] = useState(false);
+ const [error, setError] = useState("");
+ const inputRef = useRef(null);
 
-  const handleSubmit = async (event) => {
+ const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!url || !url.includes("amazon")) {
+      inputRef.current.style.animation = "shake 0.5s";
+      inputRef.current.addEventListener("animationend", () => {
+        inputRef.current.style.animation = "";
+      });
+      setLoading(false);
+      return; 
+    }
+
     try {
       const response = await fetch(
         `http://localhost:8080/api/wordcloud/generateWordCloud?productUrl=${encodeURIComponent(
@@ -36,9 +48,9 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+ };
 
-  const wordCloudOptions = useMemo(
+ const wordCloudOptions = useMemo(
     () => ({
       rotations: 22,
       rotationAngles: [0],
@@ -57,9 +69,9 @@ function App() {
       ],
     }),
     []
-  );
+ );
 
-  return (
+ return (
     <div style={{ textAlign: "center" }}>
       <h1>Word Cloud Generator</h1>
       <form onSubmit={handleSubmit}>
@@ -71,6 +83,7 @@ function App() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             style={{ marginRight: "10px" }}
+            ref={inputRef} 
           />
           <label htmlFor="url">Paste Amazon product URL.</label>
         </div>
@@ -93,8 +106,8 @@ function App() {
             <>
               {wordFrequenciesArray.length > 0 && (
                 <MemoizedReactWordcloud
-                  options={wordCloudOptions}
-                  words={wordFrequenciesArray}
+                 options={wordCloudOptions}
+                 words={wordFrequenciesArray}
                 />
               )}
             </>
@@ -102,7 +115,7 @@ function App() {
         </div>
       </div>
     </div>
-  );
+ );
 }
 
 export default App;
